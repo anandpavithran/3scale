@@ -1,0 +1,19 @@
+# ==============================================================================
+# 6. 3SCALE APIMANAGER CUSTOM RESOURCE
+# ==============================================================================
+apiVersion: apps.3scale.net/v1alpha1
+kind: APIManager
+metadata:
+  name: apimanager
+  namespace: 3scale
+spec:
+  wildcardDomain: apps-crc.testing
+  externalComponents:
+    system:
+      database: true
+      redis: true
+    backend:
+      redis: true
+  #apicast:
+   # productionSpec:
+    #  configurationLoadMode: lazy

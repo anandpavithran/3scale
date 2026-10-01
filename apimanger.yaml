@@ -7,7 +7,7 @@ metadata:
   name: apimanager
   namespace: 3scale
 spec:
-  wildcardDomain: apps.lab.example.com
+  wildcardDomain: apps-crc.testing
   externalComponents:
     system:
       database: true

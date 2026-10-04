@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: clone-and-setup-run
+spec:
+  pipelineRef:
+    name: clone-and-setup-pipeline
+  params:
+    - name: git-url
+      value: "https://github.com/anandpavithran/3scale"
+    - name: git-revision
+      value: "main"
+    - name: target-project
+      value: "test100"
+    - name: context-dir
+      value: "GE1-2"
+  workspaces:
+    - name: shared-data
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi

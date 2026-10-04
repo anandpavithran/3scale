@@ -1,0 +1,178 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: clone-and-setup-pipeline
+spec:
+  params:
+    - name: git-url
+      type: string
+      default: "https://github.com/anandpavithran/3scale"
+      description: "Target Git Repository URL"
+    - name: git-revision
+      type: string
+      default: "main"
+      description: "Git branch or revision"
+    - name: target-project
+      type: string
+      default: "test100"
+      description: "Project/Namespace to create or verify"
+    - name: context-dir
+      type: string
+      default: "GE1-2"
+      description: "Context directory inside the repository"
+    - name: image-dest
+      type: string
+      default: "quay.io/anandpavithran/comple:1.0"
+      description: "Target container image destination" 
+    - name: python-builder-image
+      type: string
+      default: "registry.access.redhat.com/ubi9/python-311:latest"
+      description: "S2I Python Builder Base Image" 
+    - name: app-name
+      type: string
+      default: "comple-app"
+      description: "Application name in OpenShift"  
+
+  workspaces:
+    - name: shared-data
+      description: "Shared workspace storing the cloned source"
+
+  tasks:
+    # Task 1: Ensure project test100 exists
+    - name: create-project
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: SCRIPT
+          value: |
+            echo "Checking if project $(params.target-project) exists..."
+            if ! oc get project $(params.target-project) > /dev/null 2>&1; then
+              echo "Project not found. Creating project $(params.target-project)..."
+              oc new-project $(params.target-project)
+            else
+              echo "Project $(params.target-project) already exists."
+            fi
+
+    # Task 2: Clone repository from GitHub
+    - name: clone-repository
+      runAfter:
+        - create-project
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: URL
+          value: $(params.git-url)
+        - name: REVISION
+          value: $(params.git-revision)
+        - name: DELETE_EXISTING
+          value: "true"
+    # Task 3: Access files inside the GE1-2 context directory
+    - name: inspect-context-dir
+      runAfter:
+        - clone-repository
+      workspaces:
+        - name: source
+          workspace: shared-data
+      taskSpec:
+        workspaces:
+          - name: source
+        params:
+          - name: target-project
+            type: string
+          - name: context-dir
+            type: string
+        steps:
+          - name: run-oc
+            image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+            script: |
+              #!/usr/bin/env bash
+              set -e
+              echo "Working inside project: $(params.target-project)"
+              cd $(workspaces.source.path)/$(params.context-dir)
+              echo "Context directory contents ($(params.context-dir)):"
+              ls -la
+      params:
+        - name: target-project
+          value: $(params.target-project)
+        - name: context-dir
+          value: $(params.context-dir)   
+    # Task 4: S2I Python Build and Push using standard cluster task
+    - name: s2i-python-build-push
+      runAfter:
+        - inspect-context-dir
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: s2i-python
+          - name: namespace
+            value: openshift-pipelines
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: IMAGE
+          value: $(params.image-dest)
+        - name: PATH_CONTEXT
+          value: $(params.context-dir)
+        - name: TLSVERIFY
+          value: "true"   
+        - name: ENV_VARS
+          value:
+            - "APP_SCRIPT=app.sh"  
+    # Task 5: Deploy application and expose service
+    - name: deploy-application
+      runAfter:
+        - s2i-python-build-push
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: SCRIPT
+          value: |
+            set -e
+            echo "Configuring Quay pull secret in $(params.target-project)..."
+
+            # Check if secret already exists in target-project, if not, copy it
+            if ! oc get secret quay-auth-secret -n $(params.target-project) > /dev/null 2>&1; then
+              oc get secret quay-auth-secret -o json | jq 'del(.metadata.namespace, .metadata.resourceVersion, .metadata.uid, .metadata.creationTimestamp)' | oc apply -n $(params.target-project) -f -
+              oc secrets link default quay-auth-secret --for=pull -n $(params.target-project)
+            fi
+
+            echo "Deploying application to project: $(params.target-project)..."
+            if ! oc get deployment $(params.app-name) -n $(params.target-project) > /dev/null 2>&1; then
+              echo "Creating new deployment and exposing route..."
+              oc new-app --docker-image=$(params.image-dest) --name=$(params.app-name) -n $(params.target-project)
+              oc expose service $(params.app-name) -n $(params.target-project) || true
+            else
+              echo "Deployment exists. Updating image reference..."
+              oc set image deployment/$(params.app-name) $(params.app-name)=$(params.image-dest) -n $(params.target-project)
+              oc rollout restart deployment/$(params.app-name) -n $(params.target-project)
+            fi
+
+            oc rollout status deployment/$(params.app-name) -n $(params.target-project) --timeout=3m      

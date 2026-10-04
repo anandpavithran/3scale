@@ -1,0 +1,130 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: clone-and-setup-pipeline
+spec:
+  params:
+    - name: git-url
+      type: string
+      default: "https://github.com/anandpavithran/3scale"
+      description: "Target Git Repository URL"
+    - name: git-revision
+      type: string
+      default: "main"
+      description: "Git branch or revision"
+    - name: target-project
+      type: string
+      default: "test100"
+      description: "Project/Namespace to create or verify"
+    - name: context-dir
+      type: string
+      default: "GE1-2"
+      description: "Context directory inside the repository"
+    - name: image-dest
+      type: string
+      default: "quay.io/anandpavithran/comple:1.0"
+      description: "Target container image destination"  
+
+  workspaces:
+    - name: shared-data
+      description: "Shared workspace storing the cloned source"
+
+  tasks:
+    # Task 1: Ensure project test100 exists
+    - name: create-project
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: SCRIPT
+          value: |
+            echo "Checking if project $(params.target-project) exists..."
+            if ! oc get project $(params.target-project) > /dev/null 2>&1; then
+              echo "Project not found. Creating project $(params.target-project)..."
+              oc new-project $(params.target-project)
+            else
+              echo "Project $(params.target-project) already exists."
+            fi
+
+    # Task 2: Clone repository from GitHub
+    - name: clone-repository
+      runAfter:
+        - create-project
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: URL
+          value: $(params.git-url)
+        - name: REVISION
+          value: $(params.git-revision)
+        - name: DELETE_EXISTING
+          value: "true"
+    # Task 3: Access files inside the GE1-2 context directory
+    - name: inspect-context-dir
+      runAfter:
+        - clone-repository
+      workspaces:
+        - name: source
+          workspace: shared-data
+      taskSpec:
+        workspaces:
+          - name: source
+        params:
+          - name: target-project
+            type: string
+          - name: context-dir
+            type: string
+        steps:
+          - name: run-oc
+            image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+            script: |
+              #!/usr/bin/env bash
+              set -e
+              echo "Working inside project: $(params.target-project)"
+              cd $(workspaces.source.path)/$(params.context-dir)
+              echo "Context directory contents ($(params.context-dir)):"
+              ls -la
+      params:
+        - name: target-project
+          value: $(params.target-project)
+        - name: context-dir
+          value: $(params.context-dir)      
+    # Task 4: Build container image with Buildah and push to Quay.io
+    - name: build-and-push
+      runAfter:
+        - inspect-context-dir
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah
+          - name: namespace
+            value: openshift-pipelines
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: IMAGE
+          value: $(params.image-dest)
+        - name: CONTEXT
+          value: $(params.context-dir)
+        - name: TLSVERIFY
+          value: "true"      

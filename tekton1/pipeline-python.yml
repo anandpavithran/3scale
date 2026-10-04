@@ -138,7 +138,7 @@ spec:
           value: "true"   
         - name: ENV_VARS
           value:
-            - "APP_SCRIPT=GE1-2/app.sh"  
+            - "APP_SCRIPT=GE1-2/app.sh" 
     # Task 5: Deploy application and expose service
     - name: deploy-application
       runAfter:
@@ -158,9 +158,12 @@ spec:
             set -e
             echo "Configuring Quay pull secret in $(params.target-project)..."
 
-            # Check if secret already exists in target-project, if not, copy it
+            # Check if secret already exists in target-project; if not, copy it without jq
             if ! oc get secret quay-auth-secret -n $(params.target-project) > /dev/null 2>&1; then
-              oc get secret quay-auth-secret -o json | jq 'del(.metadata.namespace, .metadata.resourceVersion, .metadata.uid, .metadata.creationTimestamp)' | oc apply -n $(params.target-project) -f -
+              oc get secret quay-auth-secret -o yaml | \
+                sed -e '/namespace:/d' -e '/resourceVersion:/d' -e '/uid:/d' -e '/creationTimestamp:/d' | \
+                oc apply -n $(params.target-project) -f -
+              
               oc secrets link default quay-auth-secret --for=pull -n $(params.target-project)
             fi
 
@@ -175,4 +178,4 @@ spec:
               oc rollout restart deployment/$(params.app-name) -n $(params.target-project)
             fi
 
-            oc rollout status deployment/$(params.app-name) -n $(params.target-project) --timeout=3m      
+            oc rollout status deployment/$(params.app-name) -n $(params.target-project) --timeout=3m        

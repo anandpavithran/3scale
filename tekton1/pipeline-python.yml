@@ -138,7 +138,7 @@ spec:
           value: "true"   
         - name: ENV_VARS
           value:
-            - "APP_SCRIPT=app.sh"  
+            - "APP_SCRIPT=GE1-2/app.sh"  
     # Task 5: Deploy application and expose service
     - name: deploy-application
       runAfter:

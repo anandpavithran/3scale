@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: hello-world
+spec:
+  params:
+    - name: person-name
+      type: string
+      description: "Name to greet"
+      default: "World"
+  steps:
+    - name: echo-greeting
+      image: ubi10
+      script: |
+        #!/bin/sh
+        echo "Hello, $(params.person-name)!"
+    - name: echo-date
+      image: ubi10
+      script: |
+        #!/bin/sh
+        echo "The current container date is: $(date)"

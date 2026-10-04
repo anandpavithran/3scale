@@ -1,0 +1,11 @@
+Download
+https://mirror.openshift.com/pub/openshift-v4/clients/pipelines/latest/tkn-linux-amd64.tar.gz
+mkdir ~/bin
+tar -xf ~/Downloads/tkn-linux-*.tar -C ~/bin
+tkn pipeline start message-flow-pipeline   --workspace name=pipeline-storage,claimName=test1   --showlog
+without prompt to run-first create pipeline and the create pipelinerun
+
+kubectl get pipelinerun -n demo-pipeline -o name | xargs -I {} kubectl patch {} -n demo-pipeline --type=json -p '[{"op":"remove","path":"/metadata/finalizers"}]'
+ 1014  kubectl get taskrun -n demo-pipeline -o name | xargs -I {} kubectl patch {} -n demo-pipeline --type=json -p '[{"op":"remove","path":"/metadata/finalizers"}]'
+kubectl get namespace test100 -o json | tr -d '\n' | sed 's/"finalizers": \[[^]]*\]/"finalizers": []/' | kubectl replace --raw /api/v1/namespaces/test100/finalize -f -
+

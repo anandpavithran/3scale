@@ -1,0 +1,52 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: write-message
+spec:
+  workspaces:
+    - name: shared-data
+  steps:
+    - name: write
+      image: ubi10
+      script: |
+        #!/bin/sh
+        echo "Build completed at $(date)" > $(workspaces.shared-data.path)/output.txt
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: read-message
+spec:
+  workspaces:
+    - name: shared-data
+  steps:
+    - name: read
+      image: ubi10
+      script: |
+        #!/bin/sh
+        cat $(workspaces.shared-data.path)/output.txt
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: message-flow-pipeline
+spec:
+  workspaces:
+    - name: pipeline-storage
+  tasks:
+    - name: step-one
+      taskRef:
+        name: write-message
+      workspaces:
+        - name: shared-data
+          workspace: pipeline-storage
+
+    - name: step-two
+      taskRef:
+        name: read-message
+      runAfter:
+        - step-one
+      workspaces:
+        - name: shared-data
+          workspace: pipeline-storage
+---

@@ -1,0 +1,16 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: message-flow-run-1
+spec:
+  pipelineRef:
+    name: message-flow-pipeline
+  workspaces:
+    - name: pipeline-storage
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi

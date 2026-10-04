@@ -1,0 +1,69 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: clone-and-build-pipeline
+spec:
+  description: "Clones repo into workspace and builds container from context directory GE1-2."
+  workspaces:
+    - name: shared-data
+  params:
+    - name: git-url
+      type: string
+      default: "https://github.com/anandpavithran/3scale"
+    - name: git-revision
+      type: string
+      default: "main"
+    - name: context-dir
+      type: string
+      default: "GE1-2"
+    - name: image-name
+      type: string
+      description: "Target image destination (e.g., quay.io/myuser/myapp:latest or image-registry.openshift-image-registry.svc:5000/...)"
+  tasks:
+    # Task 1: Fetch source code from GitHub
+    - name: fetch-repo
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines # Or 'tekton-pipelines' in vanilla k8s
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-revision)
+        - name: deleteExisting
+          value: "true"
+
+    # Task 2: Build the application from context directory GE1-2
+    - name: build-application
+      runAfter:
+        - fetch-repo
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah
+          - name: namespace
+            value: openshift-pipelines
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: IMAGE
+          value: $(params.image-name)
+        - name: CONTEXT
+          value: $(params.context-dir)
+        - name: DOCKERFILE
+          value: "./Dockerfile"
+        - name: TLSVERIFY
+          value: "false"

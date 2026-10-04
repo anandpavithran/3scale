@@ -1,0 +1,35 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: deploy-to-openshift
+  namespace: tekton-build
+spec:
+  params:
+    - name: image
+      type: string
+    - name: targetNamespace
+      type: string
+      default: "test100"
+    - name: appName
+      type: string
+      default: "sampleapp"
+  steps:
+    - name: deploy
+      image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+      script: |
+        #!/bin/sh
+        set -e
+        echo "Deploying $(params.appName) to $(params.targetNamespace) with image $(params.image)..."
+
+        # Check if deployment exists; if not, create it, otherwise update its image
+        if ! oc get deployment $(params.appName) -n $(params.targetNamespace) >/dev/null 2>&1; then
+          oc create deployment $(params.appName) \
+            --image=$(params.image) \
+            -n $(params.targetNamespace)
+          oc expose deployment $(params.appName) --port=8080 -n $(params.targetNamespace) || true
+          oc expose service $(params.appName) -n $(params.targetNamespace) || true
+        else
+          oc set image deployment/$(params.appName) $(params.appName)=$(params.image) -n $(params.targetNamespace)
+        fi
+
+        oc rollout status deployment/$(params.appName) -n $(params.targetNamespace) --timeout=120s

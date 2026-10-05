@@ -1,0 +1,17 @@
+# 1. Log in to the cluster
+oc login -u developer -p developer https://api.lab.example.com:6443
+
+# 2. Create or switch to the project
+oc new-project api-backend-lab
+
+# 3. Deploy the application directly from your Git repository using the S2I image
+oc new-app registry.access.redhat.com/ubi9/python-314-minimal~https://github.com/anandpavithran/3scale/lab1 --name=account-backend
+
+# 4. Follow the build logs
+oc logs -f bc/account-backend
+
+# 5. Expose the service through an OpenShift Route (uses wildcard domain: apps.lab.example.com)
+oc expose svc/account-backend
+
+# 6. Verify the deployed service route URL
+oc get route account-backend -o jsonpath='{"http://"}{.spec.host}{"\n"}'

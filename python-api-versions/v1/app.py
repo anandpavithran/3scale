@@ -3,7 +3,7 @@ from fastapi import FastAPI
 import uvicorn
 
 app = FastAPI()
-
+@app.get("/")
 @app.get("/books")
 def get_books():
     return {

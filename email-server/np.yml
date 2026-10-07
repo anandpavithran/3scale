@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-3scale
+  namespace: dev-mailserver
+spec:
+  podSelector:
+    matchLabels:
+      app: mailserver
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: 3scale
+    ports:
+    - protocol: TCP
+      port: 1025
+  policyTypes:
+  - Ingress

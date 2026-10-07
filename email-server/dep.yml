@@ -1,60 +1,43 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postfix
+  name: mailserver
+  namespace: dev-mailserver
   labels:
-    app: postfix
+    app: mailserver
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postfix
+      app: mailserver
   template:
     metadata:
       labels:
-        app: postfix
+        app: mailserver
     spec:
-      initContainers:
-        - name: init-postmap
-          image: boky/postfix:latest
-          command:
-            - /bin/sh
-            - -c
-            - |
-              cp /config/vmailbox /work/vmailbox
-              postmap /work/vmailbox
-          volumeMounts:
-            - name: config-volume
-              mountPath: /config
-            - name: work-volume
-              mountPath: /work
       containers:
-        - name: postfix
-          image: boky/postfix:latest
-          env:
-            - name: ALLOW_EMPTY_SENDER_DOMAINS
-              value: "true"
-          ports:
-            - containerPort: 2525
-              name: smtp
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/postfix/main.cf
-              subPath: main.cf
-            - name: work-volume
-              mountPath: /etc/postfix/vmailbox
-              subPath: vmailbox
-            - name: work-volume
-              mountPath: /etc/postfix/vmailbox.db
-              subPath: vmailbox.db
-            - name: mail-storage
-              mountPath: /var/mail/vhosts
-      volumes:
-        - name: config-volume
-          configMap:
-            name: postfix-config
-        - name: work-volume
-          emptyDir: {}
-        - name: mail-storage
-          persistentVolumeClaim:
-            claimName: postfix-mail-pvc
+      - name: mailpit
+        image: axllent/mailpit:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: smtp
+          containerPort: 1025
+          protocol: TCP
+        - name: http-ui
+          containerPort: 8025
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault

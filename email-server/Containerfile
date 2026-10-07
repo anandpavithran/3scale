@@ -1,0 +1,21 @@
+FROM fedora:latest
+
+RUN dnf install -y postfix mailx cyrus-sasl cyrus-sasl-plain && \
+    dnf clean all
+
+# Configure Postfix to listen on unprivileged port 2525
+RUN postconf -e "inet_interfaces = all" && \
+    postconf -e "master_service_disable =" && \
+    postconf -e "mydestination = \$myhostname, localhost.\$mydomain, localhost, example.local" && \
+    postconf -e "mynetworks = 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16" && \
+    postconf -e "home_mailbox = Maildir/"
+
+# Remap standard master.cf smtp service from port 25 to 2525
+RUN sed -i 's/^smtp      inet/2525      inet/' /etc/postfix/master.cf
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 2525
+
+ENTRYPOINT ["/entrypoint.sh"]

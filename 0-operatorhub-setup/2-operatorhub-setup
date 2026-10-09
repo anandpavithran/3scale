@@ -1,12 +1,13 @@
 #!/bin/bash
-oc login https://api.ocp4.lab.example.com:6443 -u admin -p redhatocp
+oc login https://api.lab.example.com:6443 -u admin -p redhatocp
 oc whoami --show-console
 oc get secret -n openshift-config
-oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=Downloads/pull-secret 
+oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=/home/student/Downloads/pull-secret 
 oc patch OperatorHub cluster --type merge -p '{"spec":{"disableAllDefaultSources":false}}'   
 oc get pod -n openshift-marketplace 
 oc delete catalogsources.operators.coreos.com gls-catalog-cs -n openshift-marketplace 
+oc delete catalogsources.operators.coreos.com redhat-operators -n openshift-marketplace 
 oc delete pods -n openshift-marketplace --all
-echo "Wait for 2 Minutes/n"
-sleep 120
+echo "Wait for a minute..."
+sleep 60
 oc get pod -n openshift-marketplace 

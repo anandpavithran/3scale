@@ -1,4 +1,4 @@
-oc apply -f keycloak-all-in-one.yaml
+oc apply -f all-in-one.yml
 # Ingress host URL
 oc get route keycloak-ingress -n keycloak -o jsonpath='{.spec.host}'
 

@@ -1,0 +1,45 @@
+  381  oc get pod
+  382  oc create secret tls keycloak-tls-secret      --cert=<(openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -subj "/CN=keycloak" -keyout /dev/stdout)      --key=<(openssl genrsa 2048
+)
+  383  ls
+  384  oc create secret tls keycloak-tls-secret      --cert=<(openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -subj "/CN=keycloak" -keyout /dev/stdout)      --key=<(openssl genrsa 2048)
+  385  oc get secret
+  386  ls
+  387  rm tls.*
+  388  openssl req -x509 -newkey rsa:2048 -keyout tls.key -out tls.crt -days 365 -nodes -subj "/CN=keycloak
+"
+  389  ls
+  390  oc create secret tls keycloak-tls-secret --cert=tls.crt --key=tls.key
+  391  ls
+  392  vim        all-in-one.yml 
+  393  rm all-in-one.yml 
+  394  cp a.yml keycloak.yml
+  395  vim keycloak.yml 
+  396  oc apply -f keycloak.yml 
+  397  oc get pod
+  398  oc delete pod keycloak-0 
+  399  oc ge tpod
+  400  oc get pod
+  401  oc get route
+  402  oc extract secret/keycloak-initial-admin --to=-
+  403  oc expose svc keycloak-service 
+  404  oc get route
+  405  oc get route keycloak -o jsonpath='{"https://"}{.spec.host}{"\n"}'
+  406  oc delete routes.route.openshift.io keycloak-service 
+  407  oc get pod
+  408  oc delete pod keycloak-0 
+  409  oc get pod
+  410  oc get pod -w
+  411  oc logs keycloak-0 
+  412  oc get pod
+  413  oc get deployment
+  414  oc edit keycloak keycloak 
+  415  oc get cm -n openshift-monitoring 
+  416  oc edit cm cluster-monitoring-config -n openshift-monitoring 
+  417  oc delete pod keycloak-0 
+  418  oc get pod
+  419  oc get pod -w
+  420  oc logs keycloak-0 
+  421  oc get pod
+  422  cd ..
+  423  history > keycloak/history

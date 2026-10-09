@@ -20,4 +20,4 @@ oc rollout restart deployment/system-sidekiq -n 3scale
 oc rollout restart deployment/system-app -n 3scale
 sleep 60
 oc get pod
-
+oc port-forward deployment/mailserver 8025:8025 -n dev-mailserver &

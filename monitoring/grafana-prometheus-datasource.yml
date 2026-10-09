@@ -1,0 +1,17 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDataSource
+metadata:
+  name: prometheus
+  namespace: 3scale
+spec:
+  name: middleware
+  datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus-operated:9090
+    isDefault: true
+    version: 1
+    editable: true
+    jsonData:
+      timeInterval: "5s"

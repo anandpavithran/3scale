@@ -18,5 +18,10 @@ spec:
       key: password
   http:
     tlsSecret: "keycloak-tls-secret"
+    httpEnabled: true
+    proxy:
+      headers: xforwarded
+  hostname:
+    strict: false    
   ingress:
     enabled: true

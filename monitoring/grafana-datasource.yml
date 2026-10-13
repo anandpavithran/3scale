@@ -1,0 +1,23 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: grafanadatasource-sample
+  namespace: monitoring-grafana 
+spec:
+  allowCrossNamespaceImport: True
+  datasource:
+    access: proxy
+    isDefault: true
+    jsonData:
+      httpHeaderName1: Authorization
+      timeInterval: 5s
+      tlsSkipVerify: true
+    name: Prometheus
+    secureJsonData:
+      httpHeaderValue1: 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjVYc3h6Q0tOQ2ExMlZrNC0zQjlsRzRyMzk1WnlBa1ltSnhpbFR5cUFXSEEifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjIl0sImV4cCI6MTgyMzQzOTE5OSwiaWF0IjoxNzkxOTAzMTk5LCJpc3MiOiJodHRwczovL2t1YmVybmV0ZXMuZGVmYXVsdC5zdmMiLCJqdGkiOiIxYmU1Y2MzOS1mNWNhLTQ4MmMtODM1ZC05MDMwMWY2ZDU5NzIiLCJrdWJlcm5ldGVzLmlvIjp7Im5hbWVzcGFjZSI6Im1vbml0b3JpbmctZ3JhZmFuYSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJncmFmYW5hLXNhIiwidWlkIjoiMjkwYjU0MGUtZDAzMi00YzA3LTgzZDEtZWNjYWJhMjdhZTJmIn19LCJuYmYiOjE3OTE5MDMxOTksInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDptb25pdG9yaW5nLWdyYWZhbmE6Z3JhZmFuYS1zYSJ9.Ivwldrs5isKeWVMn65WHhyjhph0iKoXXRPyvwmHAqfQ2nvZlQ3yg9EpofB1FC_jPNpvi9On5OErev09CUAbFl8YO8qQrlb6zHSkVVv_5PYDiG7DDsHvRiw0gMf0pU0B_-AYj-aii0lgfBdQHBPFP2UuLLxYMvAm50OQ5unUUfDy1uVXXrgF1X4uj5BbYLqG3w1F2Mmz_2BGOFsc9yxYeqUzvBLnnte56cppcZU93Gmy9XymIh9nvHIvrTJNJ_am3QabOu3rlPAe_FPVXevp0NOu00kVw1JeXsVBUUnM_7ww44h4PqMxmoihBKxX0v2n7vE_uOHR1uFGN9Xns1DnwpnT5xQIcmncZwWkYJrWRE_Ag9Kr4KeCo1lut8ULdC13GnjXlyLpo6GK8Ic9bjFDPi5LXuSlu8nAjIw4X-7azbRvuTtqcJvrqzepFpO3eYRn5cidL_sCG1tzIY5VH2p-Vs9p4lecjFoyba3z_PCP_y_LajCesstnDLLyJpgK8wIcL3mCe15Lk2qgV305eZyaW6JxeEekAhtLr8TRBcAPEGvO3V9H6D2QXPq8xurr1C9ApOMKQ9Cqo3aECCV4SD91iwH__KYfRBDTPEARhly1gFfojvGF9J_egU14xHpsNyknO0Frwb6kVUIufPyzTxWA8L3v4nO8ehPJlvFxr8d_2kwg'
+    type: prometheus
+    url: https://thanos-querier.openshift-monitoring.svc:9091
+  instanceSelector:
+    matchLabels:
+      app: 3scale-api-management
+      dashboards: grafana-a

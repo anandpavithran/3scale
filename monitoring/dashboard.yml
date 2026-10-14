@@ -12,5 +12,4 @@ spec:
   instanceSelector:
     matchLabels:
       app: 3scale-api-management
-        #    dashboards: grafana-a
 

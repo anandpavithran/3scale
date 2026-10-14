@@ -2,7 +2,7 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
   name: 3scale-api-management
-  namespace: monitoring-grafana
+  namespace: 3scale
   labels:
     app: 3scale-api-management
 spec:
@@ -12,5 +12,5 @@ spec:
   instanceSelector:
     matchLabels:
       app: 3scale-api-management
-      dashboards: grafana-a
+        #    dashboards: grafana-a
 

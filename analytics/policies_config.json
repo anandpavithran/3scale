@@ -1,0 +1,32 @@
+cat << 'EOF' > policies_config.json
+[
+  {
+    "name": "custom_metrics",
+    "version": "builtin",
+    "configuration": {
+      "rules": [
+        {
+          "combine_op": "and",
+          "operations": [
+            {
+              "left": "{{status}}",
+              "left_type": "liquid",
+              "op": "matches",
+              "right": "203",
+              "right_type": "plain"
+            }
+          ],
+          "metric": "status-203",
+          "increment": 1
+        }
+      ]
+    },
+    "enabled": true
+  },
+  {
+    "name": "apicast",
+    "version": "builtin",
+    "configuration": {},
+    "enabled": true
+  }
+]

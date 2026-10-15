@@ -1,4 +1,3 @@
-cat << 'EOF' > policies_config.json
 [
   {
     "name": "custom_metrics",

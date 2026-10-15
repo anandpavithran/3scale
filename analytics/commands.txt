@@ -1,21 +1,13 @@
-3scale backend create 3scale-tenant status --private-base-url=http://status-api.status-backend.svc.cluster.local   --name="status-backend
-3scale service create 3scale-tenant status  --name="status-product"   --deployment-mode="hosted"
-3scale backend-usage create 3scale-tenant status status --path="/"
-3scale metric create 3scale-tenant status status   --name="status"   --unit="1"   --description="Tracking requests to the status endpoint"
-3scale mapping-rule create 3scale-tenant status  --http-method="GET"  --pattern="/status"  --metric="status"  --delta=1
-3scale metric create 3scale-tenant status status-203 --name="status-203" --unit="1"  --description="Tracking of 203 HTTP response codes"
+3scale backend create 3scale-tenant status --private-base-url=http://status-api.status-backend.svc.cluster.local   --name="status-backend## CREATE BACKEND FROM UI
+3scale service create 3scale-tenant status-product --system-name=status
+3scale backend-usage create 3scale-tenant status status --path="/" ##LINK BACKEND TO PRODUCT FROM UI
+# 1. Create the metric for tracking requests to /status
+3scale metric create 3scale-tenant status status   --system-name="status"   --unit="1"   --description="Tracking requests to the status endpoint"
+3scale mapping-rule create 3scale-tenant status  --http-method="GET"  --pattern="/status"  --metric="status"  --delta=1###### DO USING  UI
+# 2. Add mapping rule pointing GET /status to the 'status' metric
+3scale metric create 3scale-tenant status status-203 --system-name="status-203" --unit="1"  --description="Tracking of 203 HTTP response codes"
 3scale metric list 3scale-tenant status
-3scale policy-config update 3scale-tenant status policies_config.json
-3scale application-plan create 3scale-tenant status basic --name="Basic Plan"  --default
-# Find the ID of the built-in Developer account
-ACCOUNT_ID=$(3scale account list ${REMOTE} -o json | jq '.[0].id') 
-echo "Developer Account ID: ${ACCOUNT_ID}"
-3scale application create 3scale-tenant --account="${ACCOUNT_ID}" --plan=basic  --name="Status-Consumer-App" --description="Application to test status codes"
-# Retrieve user_key from the newly created application
-USER_KEY=$(3scale application list 3scale-tenant --account="${ACCOUNT_ID}" -o json | jq -r '.[-1].user_key')
-echo "YOUR USER KEY IS: ${USER_KEY}"
-3scale proxy deploy 3sale-tenant status
-STAGING_HOST=$(3scale proxy show 3scale-tenant status -o json | jq -r '.sandbox_endpoint' | sed 's|https://||;s|http://||;s|:.*||')
-echo "Staging Gateway Host: ${STAGING_HOST}"
+3scale policy-config update 3scale-tenant status policies_config.json########### DO USING UI
+#3scale application-plan create 3scale-tenant status basic --name="Basic Plan"  --default############ DO USING UI
 
 

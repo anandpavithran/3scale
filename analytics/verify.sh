@@ -1,6 +1,6 @@
 #!/bin/bash 
-STAGING_HOST=status-3scale-apicast-staging.apps.lab.example.com:443
-USER_KEY=02e56955a08a4e4be73a743e45be13a7
+STAGING_HOST=status1-3scale-apicast-staging.apps.lab.example.com:443
+USER_KEY=efa0d4f36813cd9a4fb43eca01a1f64b
 echo "Making requests to staging gateway..."
 
 # 7 requests returning 200

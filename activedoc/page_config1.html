@@ -1,11 +1,25 @@
-{% content_for :javascripts %}
-  {{ 'active_docs.js' | javascript_include_tag }}
+{% disable_client_cache %}
+
+{% content_for javascripts %}
+    {{ 'active_docs.js' | javascript_include_tag }}
 {% endcontent_for %}
 
-<div class="container">
-  <h2>Welcome to {{ provider.name }} Partner Portal</h2>
-  <p>Interactive endpoints for registered partners only.</p>
-  <hr/>
+{% assign spec = provider.api_specs.partner_activedoc %}
 
-  {% active_docs version: "2.0" services: "partner_activedoc" %}
+
+<h1>Welcome to {{ provider.name }} Partner Portal</h1>
+  <p>Interactive endpoints for registered partners only.</p>
+
+<div class="swagger-section">
+  <div id="message-bar" class="swagger-ui-wrap">&nbsp;</div>
+  <div id="swagger-ui-container" class="swagger-ui-wrap"></div>
 </div>
+
+<script type="text/javascript">
+  (function () {
+    var url = "{{spec.url}}";
+    var serviceEndpoint = "{{spec.api_product_production_public_base_url}}"
+    SwaggerUI({ url: url, dom_id: "#swagger-ui-container" }, serviceEndpoint);
+  }());
+</script>
+
